@@ -377,14 +377,3 @@ INSERT INTO borrow_transaction (transaction_id, request_id, borrow_date, due_dat
 INSERT INTO review (review_id, transaction_id, reviewer_id, reviewee_id, rating, comment, review_date) VALUES
 (1,1,2,1,5,'great experience','2025-10-10'),
 (2,1,1,2,4,'good borrower','2025-10-10');
-
--- ============================================
--- OPTIONAL TEST QUERIES
--- ============================================
--- SELECT * FROM student;
--- SELECT * FROM category;
--- SELECT * FROM item;
--- SELECT * FROM item_image;
--- SELECT * FROM borrow_request;
--- SELECT * FROM borrow_transaction;
--- SELECT * FROM review;

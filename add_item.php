@@ -16,7 +16,10 @@ function generateItemDescriptionFromAI(string $prompt): string|false
         return false;
     }
 
-    
+    if (!defined('GEMINI_API_KEY') || trim(GEMINI_API_KEY) === '') {
+        return false;
+    }
+
     $apiKey = GEMINI_API_KEY;
 
     $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent';
@@ -38,23 +41,24 @@ function generateItemDescriptionFromAI(string $prompt): string|false
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: application/json',
-        'x-goog-api-key: ' . $apiKey
+        'X-goog-api-key: ' . $apiKey
     ]);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_TIMEOUT, 20);
 
     $response = curl_exec($ch);
 
-    if (curl_errno($ch)) {
+    if ($response === false) {
+        $err = curl_error($ch);
         curl_close($ch);
-        return false;
+        die("cURL error: " . $err);
     }
 
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
     if ($httpCode < 200 || $httpCode >= 300) {
-        return false;
+        die("Gemini API HTTP $httpCode response: " . $response);
     }
 
     $data = json_decode($response, true);

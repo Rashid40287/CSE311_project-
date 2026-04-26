@@ -11,6 +11,112 @@ if (!isset($_SESSION['student_id'])) {
 $search = isset($_GET['search']) ? trim($_GET['search']) : "";
 $category = isset($_GET['category']) ? $_GET['category'] : "";
 
+$success = "";
+$error = "";
+
+// Owner-only item deletion
+if ($_SERVER["REQUEST_METHOD"] === "POST" && ($_POST['action'] ?? '') === 'delete_item') {
+    $item_id = isset($_POST['item_id']) ? (int) $_POST['item_id'] : 0;
+    $student_id = (int) $_SESSION['student_id'];
+
+    if ($item_id <= 0) {
+        $error = "Invalid item selected.";
+    } else {
+        $check_stmt = $conn->prepare("
+            SELECT item_id, item_name
+            FROM item
+            WHERE item_id = ? AND owner_id = ?
+        ");
+        $check_stmt->bind_param("ii", $item_id, $student_id);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+
+        if ($check_result->num_rows !== 1) {
+            $error = "You can only remove items that you own.";
+        } else {
+            $item = $check_result->fetch_assoc();
+
+            $active_stmt = $conn->prepare("
+                SELECT bt.transaction_id
+                FROM borrow_transaction bt
+                JOIN borrow_request br ON bt.request_id = br.request_id
+                WHERE br.item_id = ?
+                  AND bt.transaction_status IN ('active', 'overdue')
+                LIMIT 1
+            ");
+            $active_stmt->bind_param("i", $item_id);
+            $active_stmt->execute();
+            $active_result = $active_stmt->get_result();
+
+            if ($active_result->num_rows > 0) {
+                $error = "This item cannot be removed because it is currently in an active borrowing transaction.";
+            } else {
+                $image_paths = [];
+                $img_stmt = $conn->prepare("SELECT image_path FROM item_image WHERE item_id = ?");
+                $img_stmt->bind_param("i", $item_id);
+                $img_stmt->execute();
+                $img_result = $img_stmt->get_result();
+                while ($img = $img_result->fetch_assoc()) {
+                    if (!empty($img['image_path'])) {
+                        $image_paths[] = $img['image_path'];
+                    }
+                }
+                $img_stmt->close();
+
+                $conn->begin_transaction();
+
+                try {
+                    // Remove image records first because they depend on item.
+                    $del_img_stmt = $conn->prepare("DELETE FROM item_image WHERE item_id = ?");
+                    $del_img_stmt->bind_param("i", $item_id);
+                    $del_img_stmt->execute();
+                    $del_img_stmt->close();
+
+                    // Remove request records only when they do not have a transaction record.
+                    $del_req_stmt = $conn->prepare("
+                        DELETE br
+                        FROM borrow_request br
+                        LEFT JOIN borrow_transaction bt ON bt.request_id = br.request_id
+                        WHERE br.item_id = ?
+                          AND bt.transaction_id IS NULL
+                    ");
+                    $del_req_stmt->bind_param("i", $item_id);
+                    $del_req_stmt->execute();
+                    $del_req_stmt->close();
+
+                    // Actual DELETE operation for CRUD requirement.
+                    $del_item_stmt = $conn->prepare("DELETE FROM item WHERE item_id = ? AND owner_id = ?");
+                    $del_item_stmt->bind_param("ii", $item_id, $student_id);
+                    $del_item_stmt->execute();
+
+                    if ($del_item_stmt->affected_rows !== 1) {
+                        throw new Exception("Item could not be removed. It may have transaction history that must be kept.");
+                    }
+
+                    $del_item_stmt->close();
+                    $conn->commit();
+
+                    foreach ($image_paths as $path) {
+                        $full_path = __DIR__ . '/' . $path;
+                        if (is_file($full_path)) {
+                            @unlink($full_path);
+                        }
+                    }
+
+                    $success = "Item removed successfully.";
+                } catch (Exception $e) {
+                    $conn->rollback();
+                    $error = "Failed to remove item. " . $e->getMessage();
+                }
+            }
+
+            $active_stmt->close();
+        }
+
+        $check_stmt->close();
+    }
+}
+
 // Base query
 $sql = "
 SELECT i.item_id, i.item_name, i.item_description, i.item_condition,
@@ -530,6 +636,54 @@ $categories = $conn->query("SELECT * FROM category");
         }
         .btn-request:hover .arrow { transform: translateX(3px); }
 
+        .owner-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .delete-form { width: 100%; }
+
+        .btn-remove {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            width: 100%;
+            padding: 11px 16px;
+            background: #7f1d1d;
+            color: #ffffff;
+            border: none;
+            text-decoration: none;
+            border-radius: 12px;
+            font-family: 'Syne', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: .3px;
+            cursor: pointer;
+            transition: background .2s, transform .2s, box-shadow .2s;
+        }
+        .btn-remove:hover {
+            background: #991b1b;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(127,29,29,.35);
+        }
+
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 18px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            font-size: 13.5px;
+            font-weight: 500;
+            border: 1px solid;
+            animation: fadeUp .4s cubic-bezier(.16,1,.3,1) both;
+        }
+        .alert.success { background: #f0fdf4; border-color: #86efac; color: #166534; }
+        .alert.error   { background: #fff1f2; border-color: #fda4af; color: #9f1239; }
+
         /* ─────────────────────────────
            EMPTY STATE
         ───────────────────────────── */
@@ -626,6 +780,14 @@ $categories = $conn->query("SELECT * FROM category");
         <h1>Browse Available Items</h1>
         <p>Discover resources shared by your campus community and request what you need.</p>
     </div>
+
+    <?php if (!empty($success)): ?>
+        <div class="alert success">✅ <?php echo htmlspecialchars($success); ?></div>
+    <?php endif; ?>
+
+    <?php if (!empty($error)): ?>
+        <div class="alert error">⚠️ <?php echo htmlspecialchars($error); ?></div>
+    <?php endif; ?>
 
     <!-- Filter bar -->
     <form method="GET">
@@ -788,9 +950,24 @@ $categories = $conn->query("SELECT * FROM category");
                     </div>
 
                     <div class="card-footer">
-                        <a href="request_item.php?item_id=<?php echo $row['item_id']; ?>" class="btn-request">
-                            Request Item <span class="arrow">→</span>
-                        </a>
+                        <?php if ((int)$row['owner_id'] === (int)$_SESSION['student_id']): ?>
+                            <div class="owner-actions">
+                                <a href="request_item.php?item_id=<?php echo (int)$row['item_id']; ?>" class="btn-request">
+                                    View Item <span class="arrow">→</span>
+                                </a>
+                                <form method="POST" class="delete-form" onsubmit="return confirm('Remove this item permanently? This cannot be undone.');">
+                                    <input type="hidden" name="action" value="delete_item">
+                                    <input type="hidden" name="item_id" value="<?php echo (int)$row['item_id']; ?>">
+                                    <button type="submit" class="btn-remove">
+                                        Remove
+                                    </button>
+                                </form>
+                            </div>
+                        <?php else: ?>
+                            <a href="request_item.php?item_id=<?php echo (int)$row['item_id']; ?>" class="btn-request">
+                                Request Item <span class="arrow">→</span>
+                            </a>
+                        <?php endif; ?>
                     </div>
 
                 </div>

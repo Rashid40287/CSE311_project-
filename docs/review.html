@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review System | Campus Resource Sharing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --navy:         #0a0f2c;
+            --accent:       #4f6ef7;
+            --accent-dark:  #3b5bdb;
+            --accent-soft:  #eef1ff;
+            --gold:         #f5c842;
+            --gold-soft:    #fffbea;
+            --surface:      #ffffff;
+            --bg:           #f4f6fd;
+            --border:       #e4e8f8;
+            --text-h:       #0d1535;
+            --text-body:    #4a5380;
+            --text-muted:   #8b93c4;
+            --shadow-sm:    0 2px 12px rgba(79,110,247,0.07);
+            --shadow-md:    0 10px 32px rgba(79,110,247,0.13);
+            --pending-bg:   #fffbea; --pending-bdr:  #fde68a; --pending-text: #92400e;
+            --done-bg:      #f0fdf4; --done-bdr:     #86efac; --done-text:    #166534;
+            --error-bg:     #fff1f2; --error-bdr:    #fda4af; --error-text:   #9f1239;
+            --star-fill:    #f59e0b; --star-empty:   #d1d5db;
+        }
+
+        body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text-body); min-height: 100vh; }
+
+        .navbar {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 0 40px; height: 68px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 200;
+            box-shadow: 0 2px 16px rgba(79,110,247,0.06);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+        .nav-brand .icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--accent), var(--gold)); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px; }
+        .nav-brand span { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px; color: var(--navy); letter-spacing: -.3px; }
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+        .nav-btn { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13.5px; font-weight: 500; padding: 8px 14px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); transition: color .2s, border-color .2s, box-shadow .2s, transform .2s; }
+        .nav-btn:hover { color: var(--accent); border-color: rgba(79,110,247,.35); box-shadow: 0 4px 14px rgba(79,110,247,.1); transform: translateY(-1px); }
+        .nav-btn.primary { background: var(--navy); color: #eef0ff; border-color: var(--navy); font-family: 'Syne', sans-serif; font-weight: 700; }
+        .nav-btn.primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+        .page { max-width: 1240px; margin: 0 auto; padding: 36px 24px 80px; }
+
+        .page-header {
+            position: relative; overflow: hidden;
+            background: linear-gradient(130deg, var(--navy) 0%, #1a2560 55%, #0d1f4e 100%);
+            border-radius: 24px; padding: 40px 48px; margin-bottom: 32px;
+            box-shadow: 0 16px 48px rgba(79,110,247,0.17);
+            animation: fadeUp .5s cubic-bezier(.16,1,.3,1) both;
+        }
+        .page-header::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(79,110,247,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(79,110,247,.08) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; }
+        .page-header::after { content: ''; position: absolute; width: 340px; height: 340px; background: radial-gradient(circle, rgba(79,110,247,.32) 0%, transparent 70%); border-radius: 50%; top: -100px; right: -60px; filter: blur(60px); pointer-events: none; }
+        .header-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+        .header-text .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+        .header-text .eyebrow::before { content: ''; width: 16px; height: 2px; background: var(--gold); border-radius: 2px; }
+        .header-text h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(24px,3vw,36px); color: #eef0ff; letter-spacing: -.5px; line-height: 1.18; margin-bottom: 10px; }
+        .header-text p { font-size: 14px; color: #8b93c4; line-height: 1.72; max-width: 560px; }
+        .header-stats { display: flex; gap: 14px; flex-shrink: 0; flex-wrap: wrap; }
+        .hstat { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 16px 20px; text-align: center; min-width: 90px; backdrop-filter: blur(8px); }
+        .hstat .num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 26px; color: #eef0ff; line-height: 1; margin-bottom: 5px; }
+        .hstat .num span { color: var(--gold); }
+        .hstat .lbl { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #8b93c4; }
+
+        .section-block { margin-bottom: 48px; animation: fadeUp .5s cubic-bezier(.16,1,.3,1) both; }
+        .section-block:nth-child(2) { animation-delay: .06s; }
+        .section-block:nth-child(3) { animation-delay: .10s; }
+        .section-block:nth-child(4) { animation-delay: .14s; }
+        .section-block:nth-child(5) { animation-delay: .18s; }
+
+        .section-heading { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+        .section-heading .s-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .s-icon.pending { background: var(--pending-bg); border: 1px solid var(--pending-bdr); }
+        .s-icon.done    { background: var(--done-bg);    border: 1px solid var(--done-bdr); }
+        .s-icon.inbox   { background: var(--accent-soft);border: 1px solid var(--border); }
+        .s-icon.outbox  { background: var(--gold-soft);  border: 1px solid #fde68a; }
+        .section-heading h2 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--text-h); letter-spacing: -.3px; }
+        .section-heading .count-pill { font-size: 11.5px; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid; }
+        .count-pill.pending { background: var(--pending-bg); border-color: var(--pending-bdr); color: var(--pending-text); }
+        .count-pill.done    { background: var(--done-bg);    border-color: var(--done-bdr);    color: var(--done-text); }
+        .count-pill.neutral { background: var(--accent-soft);border-color: var(--border);      color: var(--accent-dark); }
+        .divider-line { flex: 1; height: 1px; background: var(--border); }
+
+        .two-col { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 22px; }
+
+        .tx-card { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, border-color .25s; }
+        .tx-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: rgba(79,110,247,.2); }
+
+        .tx-img { position: relative; height: 170px; overflow: hidden; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 50%, #a5b4fc 100%); flex-shrink: 0; }
+        .tx-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+        .tx-card:hover .tx-img img { transform: scale(1.04); }
+        .tx-img-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+        .tx-img-placeholder .ph-icon { font-size: 36px; opacity: .5; }
+        .tx-img-placeholder .ph-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6366f1; opacity: .65; }
+
+        .ribbon { position: absolute; top: 12px; left: 12px; font-size: 11px; font-weight: 700; padding: 4px 11px; border-radius: 999px; border: 1px solid transparent; backdrop-filter: blur(8px); }
+        .ribbon.pending { background: var(--pending-bg); border-color: var(--pending-bdr); color: var(--pending-text); }
+        .ribbon.done    { background: var(--done-bg);    border-color: var(--done-bdr);    color: var(--done-text); }
+        .role-pip { position: absolute; top: 12px; right: 12px; font-size: 10.5px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: var(--navy); color: #eef0ff; letter-spacing: .4px; }
+
+        .tx-body { padding: 20px 22px 22px; display: flex; flex-direction: column; flex: 1; }
+        .tx-category { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+        .tx-category::before { content: ''; width: 5px; height: 5px; background: var(--accent); border-radius: 50%; }
+        .tx-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px; color: var(--text-h); letter-spacing: -.2px; line-height: 1.3; margin-bottom: 14px; }
+
+        .meta-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 18px; }
+        .meta-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 11px; padding: 10px 12px; }
+        .meta-cell .ml { font-size: 10.5px; color: var(--text-muted); margin-bottom: 3px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; }
+        .meta-cell .mv { font-size: 13.5px; color: var(--text-h); font-weight: 600; line-height: 1.3; }
+
+        .review-form-wrap { background: var(--pending-bg); border: 1px solid var(--pending-bdr); border-radius: 16px; padding: 18px 20px; margin-top: auto; }
+        .review-form-wrap .rfw-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14.5px; color: var(--text-h); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .rfw-title .at-tag { font-size: 12px; font-weight: 600; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; }
+
+        .star-picker { display: flex; flex-direction: row-reverse; justify-content: flex-end; gap: 4px; margin-bottom: 12px; }
+        .star-picker input { display: none; }
+        .star-picker label { font-size: 26px; cursor: pointer; color: var(--star-empty); transition: color .15s, transform .15s; line-height: 1; }
+        .star-picker label:hover, .star-picker label:hover ~ label, .star-picker input:checked ~ label { color: var(--star-fill); transform: scale(1.15); }
+
+        .review-form-wrap textarea { width: 100%; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 11px 14px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--text-h); outline: none; resize: vertical; min-height: 80px; line-height: 1.6; margin-bottom: 12px; transition: border-color .22s, box-shadow .22s; }
+        .review-form-wrap textarea::placeholder { color: var(--text-muted); }
+        .review-form-wrap textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,110,247,.12); }
+
+        .form-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .btn-submit { flex: 1 1 auto; padding: 11px 18px; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); color: #fff; border: none; border-radius: 11px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; letter-spacing: .3px; transition: transform .2s, box-shadow .2s; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(79,110,247,.32); }
+        .btn-submit:active { transform: translateY(0); }
+        .tx-footer-note { font-size: 11.5px; color: var(--text-muted); margin-top: 10px; letter-spacing: .2px; }
+
+        .review-done-wrap { background: var(--done-bg); border: 1px solid var(--done-bdr); border-radius: 16px; padding: 16px 20px; margin-top: auto; }
+        .review-done-wrap .rdw-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .rdw-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--done-text); }
+        .star-display { display: flex; gap: 2px; font-size: 18px; letter-spacing: 1px; }
+        .star-display .s-fill  { color: var(--star-fill); }
+        .star-display .s-empty { color: var(--star-empty); }
+        .review-done-comment { background: var(--surface); border-left: 3px solid var(--accent); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: var(--text-body); line-height: 1.6; margin-top: 8px; }
+        .no-comment { color: var(--text-muted); font-style: italic; }
+
+        .hist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; }
+        .hist-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 22px 24px; box-shadow: var(--shadow-sm); transition: transform .22s, box-shadow .22s, border-color .22s; }
+        .hist-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: rgba(79,110,247,.2); }
+        .hist-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+        .hist-item { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; color: var(--text-h); letter-spacing: -.2px; line-height: 1.3; }
+        .hist-date { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; padding-top: 2px; }
+        .hist-meta { font-size: 12.5px; color: var(--text-muted); margin-bottom: 10px; }
+        .hist-meta strong { color: var(--text-body); font-weight: 600; }
+        .hist-stars { display: flex; gap: 2px; font-size: 20px; margin-bottom: 12px; }
+        .hist-comment { background: var(--bg); border-left: 3px solid var(--accent); border-radius: 10px; padding: 11px 14px; font-size: 13px; color: var(--text-body); line-height: 1.62; }
+
+        .empty-box { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 48px 28px; text-align: center; box-shadow: var(--shadow-sm); }
+        .empty-box .e-icon { font-size: 44px; opacity: .45; margin-bottom: 14px; display: block; }
+        .empty-box h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--text-h); margin-bottom: 7px; }
+        .empty-box p { font-size: 13.5px; color: var(--text-muted); line-height: 1.65; max-width: 320px; margin: 0 auto; }
+
+        @keyframes fadeUp  { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+
+        @media (max-width:900px) { .two-col { grid-template-columns:1fr; } .header-stats { display:none; } }
+        @media (max-width:640px) { .navbar { padding:0 18px; } .page { padding:22px 14px 60px; } .page-header { padding:28px 22px; } .hist-grid { grid-template-columns:1fr; } .meta-mini { grid-template-columns:1fr; } }
+        @media (max-width:460px) { .nav-btn:not(.primary) { display:none; } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a class="nav-brand" href="dashboard.html">
+        <div class="icon">🎓</div>
+        <span>CampusShare</span>
+    </a>
+    <div class="nav-actions">
+        <a href="my_transactions.html" class="nav-btn">📋 Transactions</a>
+        <a href="dashboard.html" class="nav-btn primary">← Dashboard</a>
+    </div>
+</nav>
+
+<div class="page">
+
+    <div class="page-header">
+        <div class="header-inner">
+            <div class="header-text">
+                <p class="eyebrow">Feedback Centre</p>
+                <h1>Review Center</h1>
+                <p>Leave honest feedback for completed borrowing transactions. Reviews can only be submitted once an item has been returned — one review per transaction.</p>
+            </div>
+            <div class="header-stats">
+                <div class="hstat"><div class="num">1</div><div class="lbl">Pending</div></div>
+                <div class="hstat"><div class="num">2</div><div class="lbl">Done</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 1 — PENDING REVIEWS -->
+    <div class="section-block">
+        <div class="section-heading">
+            <div class="s-icon pending">⏳</div>
+            <h2>Pending Reviews</h2>
+            <span class="count-pill pending">1 awaiting</span>
+            <div class="divider-line"></div>
+        </div>
+        <div class="two-col">
+            <div class="tx-card">
+                <div class="tx-img">
+                    <div class="tx-img-placeholder"><span class="ph-icon">📚</span><span class="ph-lbl">No image</span></div>
+                    <span class="ribbon pending">⏳ Awaiting Review</span>
+                    <span class="role-pip">Borrower</span>
+                </div>
+                <div class="tx-body">
+                    <span class="tx-category">Returned Transaction</span>
+                    <h3 class="tx-title">Introduction to Algorithms (4th Ed.)</h3>
+                    <div class="meta-mini">
+                        <div class="meta-cell"><div class="ml">Owner</div><div class="mv">Nadia Hossain</div></div>
+                        <div class="meta-cell"><div class="ml">Borrower</div><div class="mv">Rashed Islam</div></div>
+                        <div class="meta-cell"><div class="ml">Condition</div><div class="mv">Good</div></div>
+                        <div class="meta-cell"><div class="ml">Returned</div><div class="mv">2025-04-20</div></div>
+                    </div>
+                    <div class="review-form-wrap">
+                        <div class="rfw-title">✍️ Review <span class="at-tag">Nadia Hossain</span></div>
+                        <div class="star-picker" id="stars_285">
+                            <input type="radio" name="rating_285" id="star5_285" value="5" required><label for="star5_285" title="5 stars">★</label>
+                            <input type="radio" name="rating_285" id="star4_285" value="4"><label for="star4_285" title="4 stars">★</label>
+                            <input type="radio" name="rating_285" id="star3_285" value="3"><label for="star3_285" title="3 stars">★</label>
+                            <input type="radio" name="rating_285" id="star2_285" value="2"><label for="star2_285" title="2 stars">★</label>
+                            <input type="radio" name="rating_285" id="star1_285" value="1"><label for="star1_285" title="1 star">★</label>
+                        </div>
+                        <textarea placeholder="Share your experience — was the item as described? Was the owner/borrower reliable?…"></textarea>
+                        <div class="form-row">
+                            <button type="button" class="btn-submit">Submit Review →</button>
+                        </div>
+                        <div class="tx-footer-note">Transaction #285 · Request #188</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2 — COMPLETED REVIEWS -->
+    <div class="section-block">
+        <div class="section-heading">
+            <div class="s-icon done">✅</div>
+            <h2>Completed Reviews</h2>
+            <span class="count-pill done">2 submitted</span>
+            <div class="divider-line"></div>
+        </div>
+        <div class="two-col">
+            <div class="tx-card">
+                <div class="tx-img">
+                    <div class="tx-img-placeholder"><span class="ph-icon">🧮</span><span class="ph-lbl">No image</span></div>
+                    <span class="ribbon done">✅ Reviewed</span>
+                    <span class="role-pip">Owner</span>
+                </div>
+                <div class="tx-body">
+                    <span class="tx-category">Returned Transaction</span>
+                    <h3 class="tx-title">Casio fx-991CW Calculator</h3>
+                    <div class="meta-mini">
+                        <div class="meta-cell"><div class="ml">Owner</div><div class="mv">Rashed Islam</div></div>
+                        <div class="meta-cell"><div class="ml">Borrower</div><div class="mv">Fatema Akter</div></div>
+                        <div class="meta-cell"><div class="ml">Reviewed On</div><div class="mv">2025-04-22</div></div>
+                        <div class="meta-cell"><div class="ml">Reviewed</div><div class="mv">Fatema Akter</div></div>
+                    </div>
+                    <div class="review-done-wrap">
+                        <div class="rdw-header">
+                            <span class="rdw-badge">✅ Review Submitted</span>
+                            <div class="star-display">
+                                <span class="s-fill">★</span><span class="s-fill">★</span><span class="s-fill">★</span><span class="s-fill">★</span><span class="s-fill">★</span>
+                            </div>
+                        </div>
+                        <div class="review-done-comment">Returned the calculator in perfect condition, right on time. Would gladly lend again!</div>
+                    </div>
+                    <div class="tx-footer-note" style="margin-top:12px;">Transaction #298 · Request #195</div>
+                </div>
+            </div>
+            <div class="tx-card">
+                <div class="tx-img">
+                    <div class="tx-img-placeholder"><span class="ph-icon">💻</span><span class="ph-lbl">No image</span></div>
+                    <span class="ribbon done">✅ Reviewed</span>
+                    <span class="role-pip">Borrower</span>
+                </div>
+                <div class="tx-body">
+                    <span class="tx-category">Returned Transaction</span>
+                    <h3 class="tx-title">MacBook Air (M1, 2020)</h3>
+                    <div class="meta-mini">
+                        <div class="meta-cell"><div class="ml">Owner</div><div class="mv">MD Abdullah</div></div>
+                        <div class="meta-cell"><div class="ml">Borrower</div><div class="mv">Rashed Islam</div></div>
+                        <div class="meta-cell"><div class="ml">Reviewed On</div><div class="mv">2025-03-18</div></div>
+                        <div class="meta-cell"><div class="ml">Reviewed</div><div class="mv">MD Abdullah</div></div>
+                    </div>
+                    <div class="review-done-wrap">
+                        <div class="rdw-header">
+                            <span class="rdw-badge">✅ Review Submitted</span>
+                            <div class="star-display">
+                                <span class="s-fill">★</span><span class="s-fill">★</span><span class="s-fill">★</span><span class="s-fill">★</span><span class="s-empty">★</span>
+                            </div>
+                        </div>
+                        <div class="review-done-comment">Great owner, very responsive and flexible. MacBook was in excellent condition as described.</div>
+                    </div>
+                    <div class="tx-footer-note" style="margin-top:12px;">Transaction #270 · Request #178</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 3 — REVIEWS ABOUT ME -->
+    <div class="section-block">
+        <div class="section-heading">
+            <div class="s-icon inbox">📥</div>
+            <h2>Reviews About Me</h2>
+            <span class="count-pill neutral">2 received</span>
+            <div class="divider-line"></div>
+        </div>
+        <div class="hist-grid">
+            <div class="hist-card">
+                <div class="hist-top">
+                    <div class="hist-item">Casio fx-991CW Calculator</div>
+                    <div class="hist-date">2025-04-19</div>
+                </div>
+                <div class="hist-meta">From <strong>Fatema Akter</strong></div>
+                <div class="hist-stars">
+                    <span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span>
+                </div>
+                <div class="hist-comment">Very trusting owner. The calculator was exactly as described and worked perfectly. Highly recommend!</div>
+            </div>
+            <div class="hist-card">
+                <div class="hist-top">
+                    <div class="hist-item">Introduction to Algorithms</div>
+                    <div class="hist-date">2025-04-21</div>
+                </div>
+                <div class="hist-meta">From <strong>Nadia Hossain</strong></div>
+                <div class="hist-stars">
+                    <span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-empty)">★</span>
+                </div>
+                <div class="hist-comment">Returned the book on time and in great shape. Good borrower overall.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 4 — REVIEWS I GAVE -->
+    <div class="section-block">
+        <div class="section-heading">
+            <div class="s-icon outbox">📤</div>
+            <h2>Reviews I Gave</h2>
+            <span class="count-pill neutral">2 submitted</span>
+            <div class="divider-line"></div>
+        </div>
+        <div class="hist-grid">
+            <div class="hist-card">
+                <div class="hist-top">
+                    <div class="hist-item">Casio fx-991CW Calculator</div>
+                    <div class="hist-date">2025-04-22</div>
+                </div>
+                <div class="hist-meta">For <strong>Fatema Akter</strong></div>
+                <div class="hist-stars">
+                    <span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span>
+                </div>
+                <div class="hist-comment">Returned the calculator in perfect condition, right on time. Would gladly lend again!</div>
+            </div>
+            <div class="hist-card">
+                <div class="hist-top">
+                    <div class="hist-item">MacBook Air (M1, 2020)</div>
+                    <div class="hist-date">2025-03-18</div>
+                </div>
+                <div class="hist-meta">For <strong>MD Abdullah</strong></div>
+                <div class="hist-stars">
+                    <span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-fill)">★</span><span style="color:var(--star-empty)">★</span>
+                </div>
+                <div class="hist-comment">Great owner, very responsive and flexible. MacBook was in excellent condition as described.</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

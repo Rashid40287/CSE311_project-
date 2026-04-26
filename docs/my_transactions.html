@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Transactions | Campus Resource Sharing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --navy:        #0a0f2c;
+            --accent:      #4f6ef7;
+            --accent-dark: #3b5bdb;
+            --accent-soft: #eef1ff;
+            --gold:        #f5c842;
+            --surface:     #ffffff;
+            --bg:          #f4f6fd;
+            --border:      #e4e8f8;
+            --text-h:      #0d1535;
+            --text-body:   #4a5380;
+            --text-muted:  #8b93c4;
+            --shadow-sm:   0 2px 12px rgba(79,110,247,0.07);
+            --shadow-md:   0 10px 32px rgba(79,110,247,0.13);
+            --shadow-lg:   0 18px 52px rgba(79,110,247,0.17);
+
+            --s-active-bg:   #dbeafe; --s-active-bdr:   #93c5fd; --s-active-t:   #1e40af;
+            --s-overdue-bg:  #fffbea; --s-overdue-bdr:  #fde68a; --s-overdue-t:  #92400e;
+            --s-returned-bg: #f0fdf4; --s-returned-bdr: #86efac; --s-returned-t: #166534;
+
+            --success-bg: #f0fdf4; --success-bdr: #86efac; --success-t: #166534;
+            --error-bg:   #fff1f2; --error-bdr:   #fda4af; --error-t:   #9f1239;
+        }
+
+        body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text-body); min-height: 100vh; }
+
+        .navbar {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 0 40px; height: 68px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 200;
+            box-shadow: 0 2px 16px rgba(79,110,247,0.06);
+        }
+        .nav-brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+        .nav-brand .icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--accent), var(--gold));
+            border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 19px;
+        }
+        .nav-brand span { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 17px; color: var(--navy); letter-spacing: -.3px; }
+        .nav-actions { display: flex; align-items: center; gap: 10px; }
+        .nav-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            text-decoration: none; font-size: 13.5px; font-weight: 500;
+            padding: 8px 14px; border-radius: 10px;
+            border: 1px solid var(--border); background: var(--surface); color: var(--text-muted);
+            transition: color .2s, border-color .2s, box-shadow .2s, transform .2s;
+        }
+        .nav-btn:hover { color: var(--accent); border-color: rgba(79,110,247,.35); box-shadow: 0 4px 14px rgba(79,110,247,.1); transform: translateY(-1px); }
+        .nav-btn.solid { background: var(--navy); color: #eef0ff; border-color: var(--navy); font-family: 'Syne', sans-serif; font-weight: 700; }
+        .nav-btn.solid:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+        .page { max-width: 1240px; margin: 0 auto; padding: 36px 24px 80px; }
+
+        .hero {
+            position: relative; overflow: hidden;
+            background: linear-gradient(130deg, var(--navy) 0%, #1a2560 55%, #0d1f4e 100%);
+            border-radius: 24px; padding: 44px 48px; margin-bottom: 28px;
+            box-shadow: var(--shadow-lg); animation: fadeUp .5s cubic-bezier(.16,1,.3,1) both;
+        }
+        .hero::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: linear-gradient(rgba(79,110,247,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(79,110,247,.08) 1px, transparent 1px);
+            background-size: 40px 40px; pointer-events: none;
+        }
+        .hero::after {
+            content: ''; position: absolute; width: 360px; height: 360px;
+            background: radial-gradient(circle, rgba(79,110,247,.3) 0%, transparent 70%);
+            border-radius: 50%; top: -110px; right: -50px; filter: blur(60px); pointer-events: none;
+        }
+        .hero-inner { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 28px; flex-wrap: wrap; }
+        .hero-text .eyebrow { display: inline-flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 600; letter-spacing: 1.8px; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+        .hero-text .eyebrow::before { content: ''; width: 16px; height: 2px; background: var(--gold); border-radius: 2px; }
+        .hero-text h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(24px,3vw,36px); color: #eef0ff; letter-spacing: -.5px; line-height: 1.18; margin-bottom: 10px; }
+        .hero-text p { font-size: 14px; color: #8b93c4; line-height: 1.72; max-width: 540px; }
+        .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+        .ha-btn { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; padding: 9px 18px; border-radius: 11px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; transition: transform .2s, background .2s; }
+        .ha-btn.white { background: #fff; color: var(--accent-dark); }
+        .ha-btn.white:hover { background: var(--accent-soft); transform: translateY(-1px); }
+        .ha-btn.ghost { background: rgba(255,255,255,.1); color: #eef0ff; border: 1px solid rgba(255,255,255,.18); }
+        .ha-btn.ghost:hover { background: rgba(255,255,255,.18); transform: translateY(-1px); }
+
+        .hero-stats { display: flex; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+        .hstat { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 14px 18px; text-align: center; min-width: 80px; backdrop-filter: blur(8px); }
+        .hstat .num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: #eef0ff; line-height: 1; margin-bottom: 4px; }
+        .hstat .num.blue  { color: #93c5fd; }
+        .hstat .num.gold  { color: var(--gold); }
+        .hstat .num.green { color: #4ade80; }
+        .hstat .lbl { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #8b93c4; }
+
+        .overdue-banner {
+            display: flex; align-items: center; gap: 12px;
+            background: var(--s-overdue-bg); border: 1px solid var(--s-overdue-bdr);
+            border-radius: 14px; padding: 13px 18px; margin-bottom: 24px;
+            font-size: 13.5px; color: var(--s-overdue-t); font-weight: 500;
+            animation: fadeUp .5s cubic-bezier(.16,1,.3,1) .08s both;
+        }
+        .overdue-banner strong { font-family: 'Syne', sans-serif; font-weight: 700; }
+
+        .tx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 22px; }
+
+        .tx-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 22px; overflow: hidden; box-shadow: var(--shadow-sm);
+            display: flex; flex-direction: column;
+            transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s, border-color .25s;
+            animation: cardUp .5s cubic-bezier(.16,1,.3,1) both;
+        }
+        .tx-card.is-overdue { border-color: var(--s-overdue-bdr); box-shadow: var(--shadow-sm), 0 0 0 1px var(--s-overdue-bdr); }
+        .tx-card.is-active  { border-color: var(--s-active-bdr); }
+        .tx-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); border-color: rgba(79,110,247,.22); }
+
+        .card-img-wrap { position: relative; height: 200px; overflow: hidden; background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 50%, #818cf8 100%); flex-shrink: 0; }
+        .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+        .tx-card:hover .card-img-wrap img { transform: scale(1.04); }
+        .img-placeholder { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; }
+        .img-placeholder .ph-icon { font-size: 38px; opacity: .5; }
+        .img-placeholder .ph-lbl { font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #6366f1; opacity: .65; }
+
+        .status-ribbon { position: absolute; top: 12px; left: 12px; font-size: 11px; font-weight: 700; letter-spacing: .3px; padding: 4px 11px; border-radius: 999px; border: 1px solid transparent; backdrop-filter: blur(8px); }
+        .s-active   { background: var(--s-active-bg);   border-color: var(--s-active-bdr);   color: var(--s-active-t); }
+        .s-overdue  { background: var(--s-overdue-bg);  border-color: var(--s-overdue-bdr);  color: var(--s-overdue-t); }
+        .s-returned { background: var(--s-returned-bg); border-color: var(--s-returned-bdr); color: var(--s-returned-t); }
+        .s-active::before   { content: '🔵 '; }
+        .s-overdue::before  { content: '⚠️ '; }
+        .s-returned::before { content: '✅ '; }
+
+        .role-pip { position: absolute; top: 12px; right: 12px; font-size: 10.5px; font-weight: 700; letter-spacing: .4px; padding: 3px 9px; border-radius: 999px; background: var(--navy); color: #eef0ff; }
+
+        .card-body { padding: 20px 22px 22px; display: flex; flex-direction: column; flex: 1; }
+        .card-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: var(--text-h); letter-spacing: -.3px; line-height: 1.3; margin-bottom: 16px; }
+
+        .participants { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+        .participant-cell { background: var(--accent-soft); border: 1px solid var(--border); border-radius: 12px; padding: 10px 13px; display: flex; align-items: center; gap: 9px; }
+        .participant-cell .p-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-dark)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 13px; color: #fff; flex-shrink: 0; }
+        .participant-cell .p-info .p-role { font-size: 10px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; }
+        .participant-cell .p-info .p-name { font-size: 13px; font-weight: 600; color: var(--text-h); line-height: 1.2; }
+
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 14px; }
+        .meta-cell { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 10px 13px; }
+        .meta-cell .ml { font-size: 10px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+        .meta-cell .mv { font-size: 13.5px; color: var(--text-h); font-weight: 600; line-height: 1.35; }
+        .meta-cell .mv.muted { color: var(--text-muted); font-weight: 400; }
+        .meta-cell .mv.overdue-text { color: var(--s-overdue-t); }
+
+        .timeline-bar { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+        .tl-label { font-size: 10px; font-weight: 600; letter-spacing: .7px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+        .tl-track { display: flex; align-items: center; }
+        .tl-node { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .tl-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid; margin-bottom: 5px; }
+        .tl-dot.filled { background: var(--accent); border-color: var(--accent); }
+        .tl-dot.empty  { background: var(--surface); border-color: var(--border); }
+        .tl-dot.green  { background: #22c55e; border-color: #22c55e; }
+        .tl-dot.amber  { background: #f59e0b; border-color: #f59e0b; }
+        .tl-node-lbl   { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+        .tl-node-date  { font-size: 11px; font-weight: 600; color: var(--text-h); white-space: nowrap; }
+        .tl-line { flex: 1; height: 2px; background: var(--border); margin-bottom: 14px; }
+        .tl-line.done { background: linear-gradient(90deg, var(--accent), var(--accent-dark)); }
+
+        .msg-box { background: var(--bg); border-left: 3px solid var(--accent); border-radius: 11px; padding: 12px 15px; margin-bottom: 16px; }
+        .msg-box .msg-label { font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+        .msg-box p { font-size: 13.5px; color: var(--text-body); line-height: 1.65; }
+
+        .card-footer { padding-top: 14px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; flex-wrap: wrap; }
+        .footer-ids { font-size: 11.5px; color: var(--text-muted); letter-spacing: .2px; }
+
+        .btn-return {
+            display: inline-flex; align-items: center; gap: 7px;
+            border: 1px solid var(--s-returned-bdr); padding: 10px 18px; border-radius: 11px;
+            font-family: 'Syne', sans-serif; font-size: 12.5px; font-weight: 700;
+            cursor: pointer; letter-spacing: .3px;
+            background: var(--s-returned-bg); color: var(--s-returned-t);
+            transition: background .2s, transform .2s, box-shadow .2s;
+        }
+        .btn-return:hover { background: #dcfce7; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(22,163,74,.2); }
+        .btn-return:active { transform: translateY(0); }
+
+        .returned-note { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--s-returned-t); }
+
+        .empty-box { background: var(--surface); border: 1px solid var(--border); border-radius: 24px; padding: 72px 28px; text-align: center; box-shadow: var(--shadow-sm); }
+        .empty-box .e-icon { font-size: 52px; opacity: .4; margin-bottom: 18px; display: block; }
+        .empty-box h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; color: var(--text-h); margin-bottom: 8px; }
+        .empty-box p { font-size: 14px; color: var(--text-muted); max-width: 360px; margin: 0 auto; line-height: 1.65; }
+
+        @keyframes fadeUp  { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes cardUp  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+        .tx-card:nth-child(1) { animation-delay:.04s; }
+        .tx-card:nth-child(2) { animation-delay:.08s; }
+        .tx-card:nth-child(3) { animation-delay:.12s; }
+
+        @media (max-width:1040px) { .tx-grid { grid-template-columns:1fr; } }
+        @media (max-width:700px) {
+            .navbar { padding:0 18px; } .page { padding:22px 14px 60px; }
+            .hero { padding:28px 22px; } .hero-stats { display:none; }
+            .meta-grid, .participants { grid-template-columns:1fr; }
+        }
+        @media (max-width:460px) { .nav-btn:not(.solid) { display:none; } }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <a class="nav-brand" href="dashboard.html">
+        <div class="icon">🎓</div>
+        <span>CampusShare</span>
+    </a>
+    <div class="nav-actions">
+        <a href="manage_requests.html" class="nav-btn">🛠️ Manage Requests</a>
+        <a href="dashboard.html" class="nav-btn solid">← Dashboard</a>
+    </div>
+</nav>
+
+<div class="page">
+
+    <div class="hero">
+        <div class="hero-inner">
+            <div class="hero-text">
+                <p class="eyebrow">Borrowing History</p>
+                <h1>My Transactions</h1>
+                <p>Track all borrowing activity for items you own or have borrowed. Mark active transactions as returned once the item is back.</p>
+                <div class="hero-actions">
+                    <a href="manage_requests.html" class="ha-btn white">🛠️ Manage Requests</a>
+                    <a href="dashboard.html" class="ha-btn ghost">← Dashboard</a>
+                </div>
+            </div>
+            <div class="hero-stats">
+                <div class="hstat"><div class="num">3</div><div class="lbl">Total</div></div>
+                <div class="hstat"><div class="num blue">1</div><div class="lbl">Active</div></div>
+                <div class="hstat"><div class="num gold">1</div><div class="lbl">Overdue</div></div>
+                <div class="hstat"><div class="num green">1</div><div class="lbl">Returned</div></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="overdue-banner">
+        <span style="font-size:18px;">⚠️</span>
+        <span>You have <strong>1 overdue transaction</strong> — please return the item as soon as possible.</span>
+    </div>
+
+    <div class="tx-grid">
+
+        <!-- Card 1 — Active (borrower role) -->
+        <div class="tx-card is-active">
+            <div class="card-img-wrap">
+                <div class="img-placeholder"><span class="ph-icon">💻</span><span class="ph-lbl">No image</span></div>
+                <span class="status-ribbon s-active">Active</span>
+                <span class="role-pip">Borrower</span>
+            </div>
+            <div class="card-body">
+                <h3 class="card-title">MacBook Air (M1, 2020)</h3>
+                <div class="participants">
+                    <div class="participant-cell">
+                        <div class="p-avatar">M</div>
+                        <div class="p-info"><div class="p-role">Owner</div><div class="p-name">MD Abdullah</div></div>
+                    </div>
+                    <div class="participant-cell">
+                        <div class="p-avatar">R</div>
+                        <div class="p-info"><div class="p-role">Borrower</div><div class="p-name">Rashed Islam</div></div>
+                    </div>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-cell"><div class="ml">Condition</div><div class="mv">Good</div></div>
+                    <div class="meta-cell"><div class="ml">Borrow Date</div><div class="mv">2025-04-27</div></div>
+                    <div class="meta-cell"><div class="ml">Due Date</div><div class="mv">2025-05-04</div></div>
+                    <div class="meta-cell"><div class="ml">Return Date</div><div class="mv muted">Not returned yet</div></div>
+                </div>
+                <div class="timeline-bar">
+                    <div class="tl-label">📅 Transaction Timeline</div>
+                    <div class="tl-track">
+                        <div class="tl-node"><div class="tl-dot filled"></div><div class="tl-node-lbl">Borrowed</div><div class="tl-node-date">Apr 27</div></div>
+                        <div class="tl-line done"></div>
+                        <div class="tl-node"><div class="tl-dot filled"></div><div class="tl-node-lbl">Due</div><div class="tl-node-date">May 4</div></div>
+                        <div class="tl-line"></div>
+                        <div class="tl-node"><div class="tl-dot empty"></div><div class="tl-node-lbl">Returned</div><div class="tl-node-date">—</div></div>
+                    </div>
+                </div>
+                <div class="msg-box">
+                    <div class="msg-label">💬 Request Message</div>
+                    <p>Hi! I need this for a group project presentation. Will handle with utmost care and return promptly.</p>
+                </div>
+                <div class="card-footer">
+                    <span class="footer-ids">Tx #301 &nbsp;·&nbsp; Req #201</span>
+                    <button type="button" class="btn-return">✅ Mark as Returned</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2 — Overdue (owner role) -->
+        <div class="tx-card is-overdue">
+            <div class="card-img-wrap">
+                <div class="img-placeholder"><span class="ph-icon">🧮</span><span class="ph-lbl">No image</span></div>
+                <span class="status-ribbon s-overdue">Overdue</span>
+                <span class="role-pip">Owner</span>
+            </div>
+            <div class="card-body">
+                <h3 class="card-title">Casio fx-991CW Calculator</h3>
+                <div class="participants">
+                    <div class="participant-cell">
+                        <div class="p-avatar">R</div>
+                        <div class="p-info"><div class="p-role">Owner</div><div class="p-name">Rashed Islam</div></div>
+                    </div>
+                    <div class="participant-cell">
+                        <div class="p-avatar">F</div>
+                        <div class="p-info"><div class="p-role">Borrower</div><div class="p-name">Fatema Akter</div></div>
+                    </div>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-cell"><div class="ml">Condition</div><div class="mv">Like New</div></div>
+                    <div class="meta-cell"><div class="ml">Borrow Date</div><div class="mv">2025-04-12</div></div>
+                    <div class="meta-cell"><div class="ml">Due Date</div><div class="mv overdue-text">2025-04-19 ⚠️</div></div>
+                    <div class="meta-cell"><div class="ml">Return Date</div><div class="mv muted">Not returned yet</div></div>
+                </div>
+                <div class="timeline-bar">
+                    <div class="tl-label">📅 Transaction Timeline</div>
+                    <div class="tl-track">
+                        <div class="tl-node"><div class="tl-dot filled"></div><div class="tl-node-lbl">Borrowed</div><div class="tl-node-date">Apr 12</div></div>
+                        <div class="tl-line done"></div>
+                        <div class="tl-node"><div class="tl-dot amber"></div><div class="tl-node-lbl">Due</div><div class="tl-node-date">Apr 19</div></div>
+                        <div class="tl-line"></div>
+                        <div class="tl-node"><div class="tl-dot empty"></div><div class="tl-node-lbl">Returned</div><div class="tl-node-date">—</div></div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <span class="footer-ids">Tx #298 &nbsp;·&nbsp; Req #195</span>
+                    <button type="button" class="btn-return">✅ Mark as Returned</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3 — Returned (borrower role) -->
+        <div class="tx-card">
+            <div class="card-img-wrap">
+                <div class="img-placeholder"><span class="ph-icon">📚</span><span class="ph-lbl">No image</span></div>
+                <span class="status-ribbon s-returned">Returned</span>
+                <span class="role-pip">Borrower</span>
+            </div>
+            <div class="card-body">
+                <h3 class="card-title">Introduction to Algorithms (4th Ed.)</h3>
+                <div class="participants">
+                    <div class="participant-cell">
+                        <div class="p-avatar">N</div>
+                        <div class="p-info"><div class="p-role">Owner</div><div class="p-name">Nadia Hossain</div></div>
+                    </div>
+                    <div class="participant-cell">
+                        <div class="p-avatar">R</div>
+                        <div class="p-info"><div class="p-role">Borrower</div><div class="p-name">Rashed Islam</div></div>
+                    </div>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-cell"><div class="ml">Condition</div><div class="mv">Good</div></div>
+                    <div class="meta-cell"><div class="ml">Borrow Date</div><div class="mv">2025-04-14</div></div>
+                    <div class="meta-cell"><div class="ml">Due Date</div><div class="mv">2025-04-21</div></div>
+                    <div class="meta-cell"><div class="ml">Return Date</div><div class="mv">2025-04-20</div></div>
+                </div>
+                <div class="timeline-bar">
+                    <div class="tl-label">📅 Transaction Timeline</div>
+                    <div class="tl-track">
+                        <div class="tl-node"><div class="tl-dot filled"></div><div class="tl-node-lbl">Borrowed</div><div class="tl-node-date">Apr 14</div></div>
+                        <div class="tl-line done"></div>
+                        <div class="tl-node"><div class="tl-dot green"></div><div class="tl-node-lbl">Due</div><div class="tl-node-date">Apr 21</div></div>
+                        <div class="tl-line done"></div>
+                        <div class="tl-node"><div class="tl-dot green"></div><div class="tl-node-lbl">Returned</div><div class="tl-node-date">Apr 20</div></div>
+                    </div>
+                </div>
+                <div class="msg-box">
+                    <div class="msg-label">💬 Request Message</div>
+                    <p>Studying for my algorithms exam. Will return in the same condition.</p>
+                </div>
+                <div class="card-footer">
+                    <span class="footer-ids">Tx #285 &nbsp;·&nbsp; Req #188</span>
+                    <span class="returned-note">✅ Returned</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

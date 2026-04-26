@@ -25,6 +25,29 @@
             max-width: 100%;
             height: auto;
         }
+
+        /* NEW NAV GRID */
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .nav-grid a {
+            text-decoration: none;
+            background: #0a0f2c;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .nav-grid a:hover {
+            background: #4f6ef7;
+        }
     </style>
 </head>
 <body>
@@ -37,6 +60,24 @@
         This is a DBMS project built using PHP and MySQL.
         It allows students to share and borrow items within campus.
     </p>
+</div>
+
+<!-- NEW NAVIGATION SECTION -->
+<div class="box">
+    <h3>Open Static UI Pages</h3>
+
+    <div class="nav-grid">
+        <a href="login.html">Login</a>
+        <a href="register.html">Register</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="browse_item.html">Browse Items</a>
+        <a href="add_item.html">Add Item</a>
+        <a href="my_requests.html">My Requests</a>
+        <a href="manage_requests.html">Manage Requests</a>
+        <a href="my_transactions.html">Transactions</a>
+        <a href="review.html">Review Center</a>
+        <a href="user_reviews.html">User Reviews</a>
+    </div>
 </div>
 
 <div class="box">
